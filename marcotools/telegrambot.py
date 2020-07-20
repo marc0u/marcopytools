@@ -1,7 +1,7 @@
 import logging
 import urllib.parse
 
-import nettools as nt
+from marcotools.nettools import get_json_from_url, get_url
 
 
 class tb():
@@ -13,7 +13,7 @@ class tb():
         url = self.URL_BASE + "getUpdates"
         if offset:
             url += "?offset={}".format(offset)
-        js = nt.get_json_from_url(url)
+        js = get_json_from_url(url)
         if js:
             return js
         else:
@@ -85,7 +85,7 @@ class tb():
 
         url = self.URL_BASE + \
             "sendMessage?text={}&chat_id={}".format(text, chat_id)
-        result = nt.get_url(url)
+        result = get_url(url)
         if result:
             return True
         else:

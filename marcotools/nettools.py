@@ -2,7 +2,7 @@ import json
 import logging
 import requests
 
-import generaltools as gt
+from marcotools.generaltools import with_retry
 
 
 class AuthSession:
@@ -14,7 +14,7 @@ class AuthSession:
     _retries = (3, 1)
     _timeout = (3, 3)
 
-    @gt.with_retry(_retries)
+    @with_retry(_retries)
     def perform_auth(self, allow_redirects=False) -> bool:
         if not(self._AUTH_URL) or not(self._AUTH_DATA):
             logging.info('_AUTH_URL and _AUTH_DATA properties are not found.')
@@ -53,7 +53,7 @@ class AuthSession:
                 self._cookies = None
                 return False
 
-    @gt.with_retry(_retries)
+    @with_retry(_retries)
     def get(self, url, allow_redirects=True, timeout=_timeout):
         if not self.perform_auth():
             err = 'Could not got authentication from perform_auth() method.'
@@ -99,7 +99,7 @@ class AuthSession:
             logging.exception("Exception occurred")
             return None
 
-    @gt.with_retry(_retries)
+    @with_retry(_retries)
     def post(self, url, data, allow_redirects=True, timeout=_timeout):
         if not self.perform_auth():
             err = 'Could not get authentication from perform_auth() method.'
@@ -128,7 +128,7 @@ class AuthSession:
             return None
 
 
-@gt.with_retry((3, 1))
+@with_retry((3, 1))
 def get_url(url, allow_redirects=True, timeout=(3, 5)):
     try:
         resp = requests.get(

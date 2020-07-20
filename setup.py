@@ -4,11 +4,11 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="marcopytools-marc0u",  # Replace with your own username
+    name="marcotools",
     version="0.0.1",
     author="Marco Urriola",
     author_email="marco.urriola@gmail.com",
-    description="My tools",
+    description="My Python tools",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/marc0u/marcopytools",
