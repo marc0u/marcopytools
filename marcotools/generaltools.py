@@ -12,9 +12,7 @@ def with_retry(retries_and_sleep):
     def real_decorator(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
-            # print(f'Retries: {retries}')
             for _ in range(retries):
-                # print(f'Retry: {x+1}')
                 result = function(*args, **kwargs)
                 if result:
                     return result

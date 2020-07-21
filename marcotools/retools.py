@@ -65,9 +65,10 @@ def first_match(pattern: str, string: str) -> str:
 
 def get_full_url(string: str, domain=None) -> str:
     """
-    Return full url from string separated by spaces.
+    Return full url from the first match in a string.
     Args:
-        string:str: Sentence to find the full url.
+        string:str: Text to find the full url.
+        domain:str: Domain to find ex. 'www.falabella.com' 
     Returns:
         str: Full url found. ex: 'https://www.falabella.com/falabella-cl/product/9432811'
     """
