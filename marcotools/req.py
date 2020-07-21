@@ -9,7 +9,7 @@ logging_logger = logging.getLogger(__name__)
 def request(method, url, params=None, data=None, headers=None, cookies=None, files=None,
             auth=None, timeout=None, allow_redirects=True, proxies=None,
             hooks=None, stream=None, verify=None, cert=None, json=None, tries=1, delay=0, max_delay=None, backoff=1, jitter=0,
-            logger=logging_logger):
+            logger=logging_logger, raise_for_status=True):
     """Constructs and sends a :class:`Request <Request>`.
 
     :param method: method for the new :class:`Request` object: ``GET``, ``OPTIONS``, ``HEAD``, ``POST``, ``PUT``, ``PATCH``, or ``DELETE``.
@@ -52,6 +52,8 @@ def request(method, url, params=None, data=None, headers=None, cookies=None, fil
                    fixed if a number, random if a range tuple (min, max)
     :param logger: logger.warning(fmt, error, delay) will be called on failed attempts.
                    default: retry.logging_logger. if None, logging is disabled.
+    :param rise_for_status: (optional) Boolean. Enable/disable rise an error when the response HTTP status code
+                            is a 4xx or a 5xx. Defaults to ``True``.
     :returns: the result of the f function.
 
     Usage::
@@ -66,9 +68,16 @@ def request(method, url, params=None, data=None, headers=None, cookies=None, fil
     while _tries:
         try:
             with requests.sessions.Session() as session:
-                return session.request(method=method, url=url, params=params, data=data, headers=headers, cookies=cookies, files=files,
-                                       auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
-                                       hooks=hooks, stream=stream, verify=verify, cert=cert, json=json)
+                if raise_for_status:
+                    r = session.request(method=method, url=url, params=params, data=data, headers=headers, cookies=cookies, files=files,
+                                        auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
+                                        hooks=hooks, stream=stream, verify=verify, cert=cert, json=json)
+                    r.raise_for_status()
+                    return r
+                else:
+                    return session.request(method=method, url=url, params=params, data=data, headers=headers, cookies=cookies, files=files,
+                                           auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
+                                           hooks=hooks, stream=stream, verify=verify, cert=cert, json=json)
         except Exception as e:
             _tries -= 1
             if not _tries:
@@ -92,7 +101,7 @@ def request(method, url, params=None, data=None, headers=None, cookies=None, fil
 def get(url, params=None, data=None, headers=None, cookies=None, files=None,
         auth=None, timeout=None, allow_redirects=True, proxies=None,
         hooks=None, stream=None, verify=None, cert=None, json=None, tries=1, delay=0, max_delay=None, backoff=1, jitter=0,
-        logger=logging_logger):
+        logger=logging_logger, raise_for_status=True):
     r"""Sends a GET request.
 
     :param url: URL for the new :class:`Request` object.
@@ -134,6 +143,8 @@ def get(url, params=None, data=None, headers=None, cookies=None, files=None,
                    fixed if a number, random if a range tuple (min, max)
     :param logger: logger.warning(fmt, error, delay) will be called on failed attempts.
                    default: retry.logging_logger. if None, logging is disabled.
+    :param rise_for_status: (optional) Boolean. Enable/disable rise an error when the response HTTP status code
+                            is a 4xx or a 5xx. Defaults to ``True``.
     :returns: the result of the f function.
 
     Usage::
@@ -147,13 +158,13 @@ def get(url, params=None, data=None, headers=None, cookies=None, files=None,
     return request('get', url, params=params, data=data, headers=headers, cookies=cookies, files=files,
                    auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
                    hooks=hooks, stream=stream, verify=verify, cert=cert, json=json, tries=tries, delay=delay, max_delay=max_delay, backoff=backoff, jitter=jitter,
-                   logger=logger)
+                   logger=logger, raise_for_status=raise_for_status)
 
 
 def post(url, params=None, data=None, headers=None, cookies=None, files=None,
          auth=None, timeout=None, allow_redirects=True, proxies=None,
          hooks=None, stream=None, verify=None, cert=None, json=None, tries=1, delay=0, max_delay=None, backoff=1, jitter=0,
-         logger=logging_logger):
+         logger=logging_logger, raise_for_status=True):
     r"""Sends a POST request.
 
     :param url: URL for the new :class:`Request` object.
@@ -195,6 +206,8 @@ def post(url, params=None, data=None, headers=None, cookies=None, files=None,
                    fixed if a number, random if a range tuple (min, max)
     :param logger: logger.warning(fmt, error, delay) will be called on failed attempts.
                    default: retry.logging_logger. if None, logging is disabled.
+    :param rise_for_status: (optional) Boolean. Enable/disable rise an error when the response HTTP status code
+                            is a 4xx or a 5xx. Defaults to ``True``.
     :returns: the result of the f function.
 
     Usage::
@@ -208,13 +221,13 @@ def post(url, params=None, data=None, headers=None, cookies=None, files=None,
     return request('post', url, params=params, data=data, headers=headers, cookies=cookies, files=files,
                    auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
                    hooks=hooks, stream=stream, verify=verify, cert=cert, json=json, tries=tries, delay=delay, max_delay=max_delay, backoff=backoff, jitter=jitter,
-                   logger=logger)
+                   logger=logger, raise_for_status=raise_for_status)
 
 
 def put(url, params=None, data=None, headers=None, cookies=None, files=None,
         auth=None, timeout=None, allow_redirects=True, proxies=None,
         hooks=None, stream=None, verify=None, cert=None, json=None, tries=1, delay=0, max_delay=None, backoff=1, jitter=0,
-        logger=logging_logger):
+        logger=logging_logger, raise_for_status=True):
     r"""Sends a PUT request.
 
     :param url: URL for the new :class:`Request` object.
@@ -256,6 +269,8 @@ def put(url, params=None, data=None, headers=None, cookies=None, files=None,
                    fixed if a number, random if a range tuple (min, max)
     :param logger: logger.warning(fmt, error, delay) will be called on failed attempts.
                    default: retry.logging_logger. if None, logging is disabled.
+    :param rise_for_status: (optional) Boolean. Enable/disable rise an error when the response HTTP status code
+                            is a 4xx or a 5xx. Defaults to ``True``.
     :returns: the result of the f function.
 
     Usage::
@@ -269,13 +284,13 @@ def put(url, params=None, data=None, headers=None, cookies=None, files=None,
     return request('put', url, params=params, data=data, headers=headers, cookies=cookies, files=files,
                    auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
                    hooks=hooks, stream=stream, verify=verify, cert=cert, json=json, tries=tries, delay=delay, max_delay=max_delay, backoff=backoff, jitter=jitter,
-                   logger=logger)
+                   logger=logger, raise_for_status=raise_for_status)
 
 
 def patch(url, params=None, data=None, headers=None, cookies=None, files=None,
           auth=None, timeout=None, allow_redirects=True, proxies=None,
           hooks=None, stream=None, verify=None, cert=None, json=None, tries=1, delay=0, max_delay=None, backoff=1, jitter=0,
-          logger=logging_logger):
+          logger=logging_logger, raise_for_status=True):
     r"""Sends a PATCH request.
 
     :param url: URL for the new :class:`Request` object.
@@ -317,6 +332,8 @@ def patch(url, params=None, data=None, headers=None, cookies=None, files=None,
                    fixed if a number, random if a range tuple (min, max)
     :param logger: logger.warning(fmt, error, delay) will be called on failed attempts.
                    default: retry.logging_logger. if None, logging is disabled.
+    :param rise_for_status: (optional) Boolean. Enable/disable rise an error when the response HTTP status code
+                            is a 4xx or a 5xx. Defaults to ``True``.
     :returns: the result of the f function.
 
     Usage::
@@ -330,13 +347,13 @@ def patch(url, params=None, data=None, headers=None, cookies=None, files=None,
     return request('patch', url, params=params, data=data, headers=headers, cookies=cookies, files=files,
                    auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
                    hooks=hooks, stream=stream, verify=verify, cert=cert, json=json, tries=tries, delay=delay, max_delay=max_delay, backoff=backoff, jitter=jitter,
-                   logger=logger)
+                   logger=logger, raise_for_status=raise_for_status)
 
 
 def delete(url, params=None, data=None, headers=None, cookies=None, files=None,
            auth=None, timeout=None, allow_redirects=True, proxies=None,
            hooks=None, stream=None, verify=None, cert=None, json=None, tries=1, delay=0, max_delay=None, backoff=1, jitter=0,
-           logger=logging_logger):
+           logger=logging_logger, raise_for_status=True):
     r"""Sends a DELETE request.
 
     :param url: URL for the new :class:`Request` object.
@@ -378,6 +395,8 @@ def delete(url, params=None, data=None, headers=None, cookies=None, files=None,
                    fixed if a number, random if a range tuple (min, max)
     :param logger: logger.warning(fmt, error, delay) will be called on failed attempts.
                    default: retry.logging_logger. if None, logging is disabled.
+    :param rise_for_status: (optional) Boolean. Enable/disable rise an error when the response HTTP status code
+                            is a 4xx or a 5xx. Defaults to ``True``.
     :returns: the result of the f function.
 
     Usage::
@@ -391,13 +410,13 @@ def delete(url, params=None, data=None, headers=None, cookies=None, files=None,
     return request('delete', url, params=params, data=data, headers=headers, cookies=cookies, files=files,
                    auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
                    hooks=hooks, stream=stream, verify=verify, cert=cert, json=json, tries=tries, delay=delay, max_delay=max_delay, backoff=backoff, jitter=jitter,
-                   logger=logger)
+                   logger=logger, raise_for_status=raise_for_status)
 
 
 def options(url, params=None, data=None, headers=None, cookies=None, files=None,
             auth=None, timeout=None, allow_redirects=True, proxies=None,
             hooks=None, stream=None, verify=None, cert=None, json=None, tries=1, delay=0, max_delay=None, backoff=1, jitter=0,
-            logger=logging_logger):
+            logger=logging_logger, raise_for_status=True):
     r"""Sends an OPTIONS request.
 
     :param url: URL for the new :class:`Request` object.
@@ -439,6 +458,8 @@ def options(url, params=None, data=None, headers=None, cookies=None, files=None,
                    fixed if a number, random if a range tuple (min, max)
     :param logger: logger.warning(fmt, error, delay) will be called on failed attempts.
                    default: retry.logging_logger. if None, logging is disabled.
+    :param rise_for_status: (optional) Boolean. Enable/disable rise an error when the response HTTP status code
+                            is a 4xx or a 5xx. Defaults to ``True``.
     :returns: the result of the f function.
 
     Usage::
@@ -452,13 +473,13 @@ def options(url, params=None, data=None, headers=None, cookies=None, files=None,
     return request('options', url, params=params, data=data, headers=headers, cookies=cookies, files=files,
                    auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
                    hooks=hooks, stream=stream, verify=verify, cert=cert, json=json, tries=tries, delay=delay, max_delay=max_delay, backoff=backoff, jitter=jitter,
-                   logger=logger)
+                   logger=logger, raise_for_status=raise_for_status)
 
 
 def head(url, params=None, data=None, headers=None, cookies=None, files=None,
          auth=None, timeout=None, allow_redirects=False, proxies=None,
          hooks=None, stream=None, verify=None, cert=None, json=None, tries=1, delay=0, max_delay=None, backoff=1, jitter=0,
-         logger=logging_logger):
+         logger=logging_logger, raise_for_status=True):
     r"""Sends a HEAD request.
 
     :param url: URL for the new :class:`Request` object.
@@ -500,6 +521,8 @@ def head(url, params=None, data=None, headers=None, cookies=None, files=None,
                    fixed if a number, random if a range tuple (min, max)
     :param logger: logger.warning(fmt, error, delay) will be called on failed attempts.
                    default: retry.logging_logger. if None, logging is disabled.
+    :param rise_for_status: (optional) Boolean. Enable/disable rise an error when the response HTTP status code
+                            is a 4xx or a 5xx. Defaults to ``True``.
     :returns: the result of the f function.
 
     Usage::
@@ -513,4 +536,4 @@ def head(url, params=None, data=None, headers=None, cookies=None, files=None,
     return request('head', url, params=params, data=data, headers=headers, cookies=cookies, files=files,
                    auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
                    hooks=hooks, stream=stream, verify=verify, cert=cert, json=json, tries=tries, delay=delay, max_delay=max_delay, backoff=backoff, jitter=jitter,
-                   logger=logger)
+                   logger=logger, raise_for_status=raise_for_status)
