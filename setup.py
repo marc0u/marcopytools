@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="marcotools",
-    version="0.1.0",
+    version="0.1.1",
     author="Marco Urriola",
     author_email="marco.urriola@gmail.com",
     description="My Python tools",

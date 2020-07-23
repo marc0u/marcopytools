@@ -1,72 +1,42 @@
 import logging
 import urllib.parse
 
-from marcotools.nettools import get_json_from_url, get_url
+from marcotools import req
 
 
 class tb():
     def __init__(self, token_base):
-        self.URL_BASE = f"https://api.telegram.org/bot{token_base}/"
+        self._URL_BASE = f"https://api.telegram.org/bot{token_base}/"
+        self._updates = []
         self._last_update_id = None
 
-    def get_updates(self, offset=None) -> dict:
-        url = self.URL_BASE + "getUpdates"
+    def _req_get(self, url: str):
+        return req.get(url, timeout=(3, 3), tries=3, delay=1,
+                       backoff=1.5, jitter=(1, 1.5))
+
+    def _get_json(self, url: str) -> dict:
+        return self._req_get(url).json()
+
+    def _getUpdates(self, offset=None):
+        url = self._URL_BASE + "getUpdates"
         if offset:
             url += "?offset={}".format(offset)
-        js = get_json_from_url(url)
-        if js:
-            return js
-        else:
-            logging.error('Updates json response could not be obtined.')
-            return None
+        updates = self._get_json(url)
+        assert updates["ok"], 'The key "ok" is false.'
+        self._updates = updates["result"]
 
-    def get_last_update_id(self, updates):
-        if not updates or (not isinstance(updates, dict)):
-            err = 'The "update" parameter is empty or is not dictionary type.'
-            logging.error(err)
-            raise AttributeError(err)
-        if not updates['ok']:
-            logging.error(
-                'The "ok" value si "False" from Telegram Updates response.')
-            return False
-
+    def _get_last_update_id(self):
+        if not self._updates:
+            return
         update_ids = []
-        for update in updates["result"]:
+        for update in self._updates:
             update_ids.append(int(update["update_id"]))
-        return max(update_ids)
+        self._last_update_id = max(update_ids) + 1
 
-    def get_last_chat_id_and_text(self, updates):
-        if not updates or (not isinstance(updates, dict)):
-            err = 'The "update" parameter is empty or is not dictionary type.'
-            logging.error(err)
-            raise AttributeError(err)
-        if not updates['ok']:
-            logging.error(
-                'The "ok" value si "False" from Telegram Updates response.')
-            return False
-
-        num_updates = len(updates["result"])
-        last_update = num_updates - 1
-        if 'edited_message' in updates["result"][last_update]:
-            text = updates["result"][last_update]["edited_message"]["text"]
-            chat_id = updates["result"][last_update]["edited_message"]["chat"]["id"]
-            return (text, chat_id)
-        else:
-            text = updates["result"][last_update]["message"]["text"]
-            chat_id = updates["result"][last_update]["message"]["chat"]["id"]
-            return (text, chat_id)
-
-    def get_updates_info(self, updates):
-        if not updates or (not isinstance(updates, dict)):
-            err = 'The "update" parameter is empty or is not dictionary type.'
-            logging.error(err)
-            raise AttributeError(err)
-        if not updates['ok']:
-            logging.error(
-                'The "ok" value si "False" from Telegram Updates response.')
-            return False
-
-        for update in updates["result"]:
+    def _get_updates_info(self) -> tuple:
+        if not self._updates:
+            return
+        for update in self._updates:
             if 'edited_message' in update:
                 text = update['edited_message']["text"] if "text" in update["message"] else ""
                 chat = update['edited_message']["chat"]["id"]
@@ -77,41 +47,15 @@ class tb():
                 user = update["message"]["from"]["id"]
             yield (text, chat, user)
 
-    def send_message(self, text, chat_id):
-        if (not isinstance(text, str)) or not chat_id:
-            err = 'Problem with "text" or "chat_id" attribute.'
-            logging.error(err)
-            raise AttributeError(err)
-
-        url = self.URL_BASE + \
-            "sendMessage?text={}&chat_id={}".format(text, chat_id)
-        result = get_url(url)
-        if result:
-            return True
-        else:
-            logging.error('Message cannot delivered')
-            return False
-
-    def bot_Handler(self, resp_handler):
-        updates = self.get_updates(self._last_update_id)
-        if not updates:
-            logging.error('Updates response could not be obtined.')
-            return False
-        if not updates['ok']:
-            logging.error(
-                'The "ok" value si "False" from Telegram Updates response.')
-            return False
-        if not len(updates["result"]) > 0:
-            return True
-        last_update_id_resp = self.get_last_update_id(updates)
-        if not last_update_id_resp:
-            logging.error('Last Update ID could not be obtined.')
-            return False
-        self._last_update_id = last_update_id_resp
-        self._last_update_id += 1
-        for update_info in self.get_updates_info(updates):
-            if not update_info:
-                logging.error('Updates info could not be obtined.')
-                return False
+    def updates_handler(self, resp_handler):
+        self._getUpdates(self._last_update_id)
+        if not self._updates:
+            return
+        self._get_last_update_id()
+        for update_info in self._get_updates_info():
             resp_handler(update_info)
-        return True
+
+    def send_message(self, text, chat_id):
+        url = self._URL_BASE + f"sendMessage?text={text}&chat_id={chat_id}"
+        result = self._req_get(url)
+        assert result.status_code == 200, f"Message couldn't be delivered. Http code: {result.status_code}."
