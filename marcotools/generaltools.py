@@ -1,6 +1,4 @@
-import json
 import datetime
-import logging
 
 from functools import wraps
 from time import sleep
@@ -21,34 +19,21 @@ def with_retry(retries_and_sleep):
     return real_decorator
 
 
-def msg_maker(*argv) -> str:
-    msg = ""
+def paragraph_maker(*argv) -> str:
+    msg = ''
     for arg in argv:
         msg += arg + "\n"
     return msg
 
 
-def msg_maker_dic(dic) -> str:
+def paragraph_maker_dict(dictionary: dict) -> str:
     msg = ''
-    for key, value in dic.items():
+    for key, value in dictionary.items():
         msg = f'{key}: {value}\n' + msg
     return msg
 
 
-def now_log(log):
+def print_log(log):
     now = datetime.datetime.now()
     now = now.strftime("%y/%m/%d %H:%M:%S - ") + log
     print(now)
-
-
-def json_to_dict(json_str: str) -> dict:
-    try:
-        return json.loads(json_str)
-    except:
-        logging.error("The argument has not json format.")
-        return None
-
-
-def datetime_to_str(datetimeobj) -> str:
-    if isinstance(datetimeobj, datetime.datetime):
-        return datetimeobj.__str__()

@@ -1,7 +1,7 @@
 import logging
 import urllib.parse
 
-from marcotools import req
+import reqtry
 
 
 class tb():
@@ -11,8 +11,8 @@ class tb():
         self._last_update_id = None
 
     def _req_get(self, url: str):
-        return req.get(url, timeout=(3, 3), tries=3, delay=1,
-                       backoff=1.5, jitter=(1, 1.5))
+        return reqtry.get(url, timeout=(3, 3), tries=3, delay=1,
+                          backoff=1.5, jitter=(1, 1.5))
 
     def _get_json(self, url: str) -> dict:
         return self._req_get(url).json()
